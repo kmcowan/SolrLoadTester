@@ -26,7 +26,7 @@ public class SolrLoadTester {
      */
     public static void main(String[] args) {
         final Timer timer = new Timer();
-        
+
         try {
             Log.init();
             System.out.println(" *************** BEGIN TEST RUN ************* ");
@@ -45,10 +45,10 @@ public class SolrLoadTester {
             boolean useThrottling = false;
             if (throttle > 0) {
                 useThrottling = true;
-                System.out.println("Throttling Enabled... "+throttle+" ms wait...");
+                System.out.println("Throttling Enabled... " + throttle + " ms wait...");
             }
-            
-            if(useThreading){
+
+            if (useThreading) {
                 System.out.println("Threading Enabled... ");
             }
 
@@ -65,11 +65,15 @@ public class SolrLoadTester {
                         Log.log(getLogResponseLine(result, time, response.getStatusLine().getStatusCode()));
                         System.out.println("Response: " + time);
                     }
-                } else if(useThrottling && useThreading){
+                } else if (useThrottling && useThreading) {
                     QueryRunner runner = new QueryRunner(query);
                     timer.schedule(runner, throttle);
+                } else if (!useThrottling && useThreading) {
+                    QueryRunner runner = new QueryRunner(query);
+                    timer.schedule(runner, 50);
+
                 } else { // default 
-                     watch.start();
+                    watch.start();
                     response = client.execute(get);
                     watch.stop();
                     long time = watch.getElapsedTime();
