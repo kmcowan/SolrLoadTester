@@ -25,7 +25,8 @@ public class SolrLoadTester {
      */
     public static void main(String[] args) {
         try {
-            Log.log(" *************** BEGIN TEST RUN ************* ");
+            Log.init();
+             System.out.println(" *************** BEGIN TEST RUN ************* ");
             Properties props = new Properties();
             props.load(new FileReader(new File("tester.properties")));
             long throttle = Long.parseLong(props.getProperty("throttle_by"));
@@ -57,7 +58,7 @@ public class SolrLoadTester {
             e.printStackTrace();
         }
         
-         Log.log(" *************** END TEST RUN ************* ");
+          System.out.println(" *************** END TEST RUN ************* ");
     }
     
     
