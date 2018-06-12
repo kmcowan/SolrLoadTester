@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.util.Date;
 import java.util.Properties;
+import java.util.Timer;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -24,9 +25,11 @@ public class SolrLoadTester {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
+        final Timer timer = new Timer();
+        
         try {
             Log.init();
-             System.out.println(" *************** BEGIN TEST RUN ************* ");
+            System.out.println(" *************** BEGIN TEST RUN ************* ");
             Properties props = new Properties();
             props.load(new FileReader(new File("tester.properties")));
             long throttle = Long.parseLong(props.getProperty("throttle_by"));
@@ -38,33 +41,55 @@ public class SolrLoadTester {
             HttpResponse response = null;
             final HttpGet get = new HttpGet(query);
             final StopWatch watch = new StopWatch();
+            boolean useThreading = Boolean.parseBoolean(props.getProperty("multithreading"));
+            boolean useThrottling = false;
+            if (throttle > 0) {
+                useThrottling = true;
+                System.out.println("Throttling Enabled... "+throttle+" ms wait...");
+            }
+            
+            if(useThreading){
+                System.out.println("Threading Enabled... ");
+            }
 
             String result = "";
             for (int i = 0; i < maxruns; i++) {
-                if(throttle > 0){
+                if (useThrottling && !useThreading) {
                     Thread.sleep(throttle);
-                }
-                watch.start();
-                response = client.execute(get);
-                watch.stop();
-                long time = watch.getElapsedTime();
-                if (response != null) {
-                    result = Utils.streamToString(response.getEntity().getContent());
-                    Log.log(getLogResponseLine(result, time, response.getStatusLine().getStatusCode()));
-                    System.out.println("Response: "+time);
+                    watch.start();
+                    response = client.execute(get);
+                    watch.stop();
+                    long time = watch.getElapsedTime();
+                    if (response != null) {
+                        result = Utils.streamToString(response.getEntity().getContent());
+                        Log.log(getLogResponseLine(result, time, response.getStatusLine().getStatusCode()));
+                        System.out.println("Response: " + time);
+                    }
+                } else if(useThrottling && useThreading){
+                    QueryRunner runner = new QueryRunner(query);
+                    timer.schedule(runner, throttle);
+                } else { // default 
+                     watch.start();
+                    response = client.execute(get);
+                    watch.stop();
+                    long time = watch.getElapsedTime();
+                    if (response != null) {
+                        result = Utils.streamToString(response.getEntity().getContent());
+                        Log.log(getLogResponseLine(result, time, response.getStatusLine().getStatusCode()));
+                        System.out.println("Response: " + time);
+                    }
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        
-          System.out.println(" *************** END TEST RUN ************* ");
+
+        System.out.println(" *************** END TEST RUN ************* ");
     }
-    
-    
-    private static String getLogResponseLine(String content, long time, int status){
+
+    public static String getLogResponseLine(String content, long time, int status) {
         String result = "";
-        result += "[" + new Date().toString() + "]( Request_to_Response_Time="+time+"){ status: "+status+" } " +content + "\n";
+        result += "[" + new Date().toString() + "]( Request_to_Response_Time=" + time + "){ status: " + status + " } " + content + "\n";
         return result;
     }
 
