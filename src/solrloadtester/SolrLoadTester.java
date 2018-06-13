@@ -32,6 +32,7 @@ public class SolrLoadTester {
             .build();
     private static CloudSolrClient solrClient = null;
     private static final ThreadQueue queue = ThreadQueue.getInstance();
+    private static final StatsTracker stats = StatsTracker.getInstance();
 
     /**
      * @param args the command line arguments
@@ -135,6 +136,7 @@ public class SolrLoadTester {
                         result = Utils.streamToString(response.getEntity().getContent());
                         Log.log(getLogResponseLine(result, time, response.getStatusLine().getStatusCode()));
                         System.out.println("Response: " + time);
+                        stats.addResponseTime(time);
                     }
                 } else if (useThrottling && useThreading) {
                     QueryRunner runner = new QueryRunner(query);
@@ -160,6 +162,8 @@ public class SolrLoadTester {
                         result = Utils.streamToString(response.getEntity().getContent());
                         Log.log(getLogResponseLine(result, time, response.getStatusLine().getStatusCode()));
                         System.out.println("Response: " + time);
+                        stats.addResponseTime(time);
+
                     }
                 }
             }
@@ -177,7 +181,15 @@ public class SolrLoadTester {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
+        System.out.println(" \n  ");
+        System.out.println(" --------------------------------------- ");
+        System.out.println(" Stats:  ");
+        System.out.println(" Number of queries:  " + stats.getResponseTimes().size());
+        System.out.println(" Average Response Time:  " + stats.getAverageResponseTime());
+        System.out.println(" Longest Query Time:  " + stats.getMaxTime());
+        System.out.println(" Shortest Query Time:  " + stats.getMinTime());
+        System.out.println(" --------------------------------------- ");
+        System.out.println(" \n  ");
         System.out.println(" *************** END TEST RUN ************* ");
         System.exit(0);
     }
@@ -230,6 +242,13 @@ public class SolrLoadTester {
      */
     public static ThreadQueue getQueue() {
         return queue;
+    }
+
+    /**
+     * @return the stats
+     */
+    public static StatsTracker getStats() {
+        return stats;
     }
 
 }

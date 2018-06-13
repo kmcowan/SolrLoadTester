@@ -62,6 +62,7 @@ public class QueryRunner extends TimerTask implements Runnable {
                      }
                      Log.log(SolrLoadTester.getLogResponseLine(result, time, status));
                     System.out.println("Response: " + time);
+                     SolrLoadTester.getStats().addResponseTime(time);
                 }
             } else {
                
@@ -72,6 +73,7 @@ public class QueryRunner extends TimerTask implements Runnable {
                     result = Utils.streamToString(response.getEntity().getContent());
                     Log.log(SolrLoadTester.getLogResponseLine(result, time, response.getStatusLine().getStatusCode()));
                     System.out.println("Response: " + time);
+                     SolrLoadTester.getStats().addResponseTime(time);
                 }
             }
         } catch (Exception e) {
